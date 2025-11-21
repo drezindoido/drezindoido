@@ -1,108 +1,60 @@
 // apiServices.ts
+// Versão 100% Mockada sem chaves de API
 
-import { GoogleGenAI } from '@google/genai';
 import axios from 'axios';
 
-// Variáveis de Ambiente (CHAVES SECRETAS INJETADAS PELO RENDER)
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const REMOVEBG_API_KEY = process.env.REMOVEBG_API_KEY;
-
-// Inicializa o Cliente Gemini
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY }); 
+// Variáveis de Ambiente são ignoradas para este deploy
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY; 
 
 // ------------------------------------
-// 1. GERAÇÃO DE IMAGEM (Prioriza API Gratuita, usa Gemini como Failover)
+// 1. GERAÇÃO DE IMAGEM
 // ------------------------------------
 export async function generateImage(prompt: string) {
-    // 1. TENTATIVA PRIMÁRIA (MOCK: Ex. DALL-E/Stable Diffusion)
-    try {
-        // ### CÓDIGO PARA CHAMADA DE API GRÁTIS DE IMAGEM AQUI ###
-        // MOCK: Forçando a falha para usar o Gemini para o deploy inicial.
-        throw new Error("MOCK: Falha na API primária de imagem."); 
-    } catch (primaryError) {
-        console.warn(`API primária de imagem falhou. Usando Gemini (Imagen) como Failover.`);
-        
-        // 2. FAILOVER (Gemini - Imagen)
-        try {
-            const response = await ai.models.generateImages({
-                model: 'imagen-3.0-generate-002', 
-                prompt: prompt,
-                config: {
-                    numberOfImages: 1,
-                    outputMimeType: 'image/jpeg',
-                    aspectRatio: '1:1',
-                }
-            });
-            
-            const base64Image = response.generatedImages[0].image.imageBytes;
-            return { 
-                url: `data:image/jpeg;base64,${base64Image}`, 
-                source: 'Gemini (Imagen Failover)' 
-            };
-        } catch (geminiError) {
-            console.error(`Falha no Gemini: ${geminiError}`);
-            throw new Error("Todas as APIs de imagem falharam.");
-        }
-    }
+    console.log(`MOCK: Processando imagem para o prompt: ${prompt}`);
+    
+    // Retorna um link de imagem de placeholder (simulando a URL da imagem gerada)
+    return { 
+        url: `https://picsum.photos/400/400?random=${Math.random()}`, 
+        source: 'MOCK API (Imagem Gerada)' 
+    };
 }
 
 
 // ------------------------------------
-// 2. GERAÇÃO DE TEXTO/STORYTELLING (Usa Gemini como Principal)
+// 2. GERAÇÃO DE TEXTO/STORYTELLING
 // ------------------------------------
 export async function generateText(prompt: string) {
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash', 
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-        });
+    console.log(`MOCK: Processando texto para o prompt: ${prompt}`);
+    
+    // Retorna um texto de placeholder longo
+    const textResult = `MOCK GEMINI RESPONSE: "A Turminha da Higiene e a Missão da Escova Mágica."
+    
+    Era uma vez, no Reino da Boca Limpa, um pequeno herói chamado Dente. Dente estava sempre pronto para aventuras, mas ele precisava da ajuda de sua fiel amiga, a Escova Mágica. Certo dia, o vilão Cárie tentou se esconder em um canto escuro.
 
-        return { 
-            text: response.text, 
-            source: 'Gemini' 
-        };
-    } catch (error) {
-        throw new Error("Falha na geração de texto com Gemini.");
-    }
+    A Escova Mágica, guiada pelo nosso herói, Dente, começou a fazer sua dança especial, um zigue-zague mágico que espantava todos os vilões. O Doutor Creme Dental deu a eles a espuma superpoderosa, garantindo que o reino ficasse brilhante e seguro.
+
+    Moral da história: Com a Escova Mágica e o Creme Dental, todos os dentes ficam fortes e brilhantes, prontos para sorrir para o mundo!
+    
+    (Resultado gerado por MOCK TEXT API)`;
+
+    return { 
+        text: textResult, 
+        source: 'MOCK API (Gemini Text)' 
+    };
 }
 
 
 // ------------------------------------
-// 3. REMOÇÃO DE FUNDO (Prioriza remove.bg, usa Gemini como Failover)
+// 3. REMOÇÃO DE FUNDO
 // ------------------------------------
 export async function removeBackground(imageUrl: string) {
-    // 1. TENTATIVA PRIMÁRIA (remove.bg)
-    try {
-        if (!REMOVEBG_API_KEY) throw new Error("Chave remove.bg não configurada.");
-        // ### CÓDIGO PARA CHAMADA DE API GRÁTIS DE REMOÇÃO DE FUNDO AQUI ###
-        throw new Error("MOCK: Limite remove.bg excedido."); 
-    } catch (primaryError) {
-        console.warn(`API remove.bg falhou. Usando Gemini como Failover criativo.`);
-        
-        // 2. FAILOVER (Gemini - Criação de Prompt)
-        try {
-            // Pede ao Gemini para criar um prompt para refazer a imagem com fundo branco
-            const promptGeneration = await ai.models.generateContent({
-                model: 'gemini-2.5-flash', 
-                contents: [
-                    {
-                        role: "user", 
-                        parts: [
-                            { text: `Descreva o objeto principal na imagem (URL: ${imageUrl}). Em seguida, crie um prompt para gerar uma imagem IDÊNTICA com fundo BRANCO PURO.` },
-                        ]
-                    }
-                ]
-            });
-            
-            const newPrompt = promptGeneration.text;
-            // Reutiliza a função de imagem para gerar o fallback
-            return await generateImage(newPrompt);
-            
-        } catch (geminiError) {
-            throw new Error("Todas as APIs de remoção de fundo falharam.");
-        }
-    }
+    console.log(`MOCK: Processando remoção de fundo para: ${imageUrl}`);
+    
+    // Simula a URL da imagem processada
+    return { 
+        url: `https://picsum.photos/400/400?grayscale&random=${Math.random()}`, 
+        source: 'MOCK API (Remove BG)' 
+    };
 }
 
 
@@ -110,20 +62,29 @@ export async function removeBackground(imageUrl: string) {
 // 4. GERAÇÃO DE VÍDEO (Storyboard como Fallback)
 // ------------------------------------
 export async function generateVideoStoryboard(prompt: string) {
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro', 
-            contents: [{ 
-                role: "user", 
-                parts: [{ text: `Crie um storyboard detalhado com 5 cenas para um vídeo baseado neste prompt: "${prompt}". Descreva a ação, o ângulo da câmera e a música de fundo para cada cena. Seja criativo.` }] 
-            }],
-        });
+    console.log(`MOCK: Gerando Storyboard para: ${prompt}`);
+    
+    const storyboardText = `MOCK STORYBOARD GEMINI PRO:
+    
+    **CENA 1: Introdução Mágica**
+    * **Ação:** Um close-up na Escova Mágica que brilha, seguida por um zoom out revelando Dente, o herói, pronto para agir.
+    * **Ângulo:** Ângulo alto, estilo épico.
+    * **Música:** Música orquestral leve e inspiradora.
 
-        return { 
-            text: response.text, 
-            source: 'Gemini Storyboard' 
-        };
-    } catch (error) {
-        throw new Error("Falha na geração do Storyboard com Gemini.");
-    }
+    **CENA 2: O Vilão Cárie**
+    * **Ação:** O vilão Cárie (uma mancha preta) tentando se esconder no canto de um molar, tremendo de medo.
+    * **Ângulo:** Close-up nos "esconderijos".
+    * **Música:** Suspense cômico.
+
+    **CENA 3: A Dança da Escovação**
+    * **Ação:** Movimentos rápidos e fluidos da Escova Mágica em um movimento de zigue-zague, limpando a tela.
+    * **Ângulo:** Visão microscópica e dinâmica.
+    * **Música:** Batida animada e rápida.
+    
+    (Resultado gerado por MOCK VIDEO API)`;
+
+    return { 
+        text: storyboardText, 
+        source: 'MOCK API (Storyboard)' 
+    };
 }
